@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+.prose h2 {
+  @apply text-2xl font-semibold mt-6 mb-2 text-slate-800;
+}
+.prose ul {
+  @apply list-disc pl-6;
+}
+.prose li {
+  @apply my-1;
+}
+.prose strong {
+  @apply font-semibold text-slate-800;
+}
