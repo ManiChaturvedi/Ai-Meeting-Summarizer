@@ -46,7 +46,7 @@ function App() {
     formData.append("File", file);
 
     try {
-      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
       const response = await axios.post(`${API_URL}/chat`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
