@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
-import axios from 'axios';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { useCallback, useMemo, useRef, useState } from "react";
+import axios from "axios";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 function App() {
   const [file, setFile] = useState(null);
@@ -13,11 +13,7 @@ function App() {
 
   const isValidFile = useCallback((f) => {
     if (!f) return false;
-    const allowed = [
-      'audio/mpeg',
-      'audio/mp3',
-      'video/mp4'
-    ];
+    const allowed = ["audio/mpeg", "audio/mp3", "video/mp4"];
     return allowed.includes(f.type);
   }, []);
 
@@ -25,12 +21,35 @@ function App() {
     const selected = event.target.files?.[0];
     if (!selected) return;
     if (!isValidFile(selected)) {
-      setError('Only MP3 or MP4 files are allowed.');
+      setError("Only MP3 or MP4 files are allowed.");
       setFile(null);
       return;
     }
     setError("");
     setFile(selected);
+  };
+  const handleDownloadPDF = async () => {
+    if (!summary) return;
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+      const response = await fetch(`${API_URL}/download-pdf`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ airesponse: summary }),
+      });
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "summary.pdf";
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      alert("Failed to download PDF. Please try again.");
+    }
   };
 
   const handleFileUpload = async () => {
@@ -55,25 +74,30 @@ function App() {
       setSummary(response.data.airesponse);
     } catch (error) {
       console.error("Error uploading file:", error);
-      setError(error.response?.data?.error || 'Something went wrong. Please try again.');
+      setError(
+        error.response?.data?.error || "Something went wrong. Please try again."
+      );
     }
     setLoading(false);
   };
 
-  const handleDrop = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    const dropped = e.dataTransfer.files?.[0];
-    if (!dropped) return;
-    if (!isValidFile(dropped)) {
-      setError('Only MP3 or MP4 files are allowed.');
-      setFile(null);
-      return;
-    }
-    setError("");
-    setFile(dropped);
-  }, [isValidFile]);
+  const handleDrop = useCallback(
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+      const dropped = e.dataTransfer.files?.[0];
+      if (!dropped) return;
+      if (!isValidFile(dropped)) {
+        setError("Only MP3 or MP4 files are allowed.");
+        setFile(null);
+        return;
+      }
+      setError("");
+      setFile(dropped);
+    },
+    [isValidFile]
+  );
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
@@ -88,7 +112,7 @@ function App() {
   }, []);
 
   const selectedFileLabel = useMemo(() => {
-    if (!file) return 'No file selected';
+    if (!file) return "No file selected";
     const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
     return `${file.name} • ${sizeMb} MB`;
   }, [file]);
@@ -98,8 +122,13 @@ function App() {
       <div className="mx-auto max-w-3xl">
         <div className="bg-white/80 backdrop-blur shadow-lg rounded-2xl p-8 border border-slate-200">
           <div className="text-center">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-800">AI Meeting Summarizer</h1>
-            <p className="text-slate-600 mt-2">Upload an MP3 or MP4 meeting recording to generate a structured summary.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-800">
+              AI Meeting Summarizer
+            </h1>
+            <p className="text-slate-600 mt-2">
+              Upload an MP3 or MP4 meeting recording to generate a structured
+              summary.
+            </p>
           </div>
 
           <div
@@ -107,12 +136,18 @@ function App() {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             className={`mt-8 rounded-xl border-2 border-dashed p-8 text-center transition ${
-              isDragging ? 'border-blue-500 bg-blue-50' : 'border-slate-300 hover:border-slate-400'
+              isDragging
+                ? "border-blue-500 bg-blue-50"
+                : "border-slate-300 hover:border-slate-400"
             }`}
           >
             <div className="flex flex-col items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xl">⬆️</div>
-              <p className="text-slate-700 font-medium">Drag and drop your file here</p>
+              <div className="h-12 w-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xl">
+                ⬆️
+              </div>
+              <p className="text-slate-700 font-medium">
+                Drag and drop your file here
+              </p>
               <p className="text-slate-500 text-sm">MP3 or MP4 up to 50 MB</p>
               <div className="mt-3">
                 <button
@@ -153,16 +188,28 @@ function App() {
                   Summarizing...
                 </span>
               ) : (
-                'Summarize'
+                "Summarize"
               )}
             </button>
           </div>
 
           {summary && (
             <div className="mt-8">
-              <h2 className="text-xl font-semibold text-slate-800">Summary</h2>
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-slate-800">
+                  Summary
+                </h2>
+                <button
+                  onClick={handleDownloadPDF}
+                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 text-sm"
+                >
+                  ⬇️ Download PDF
+                </button>
+              </div>
               <div className="prose prose-slate max-w-none mt-4">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{summary}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {summary}
+                </ReactMarkdown>
               </div>
             </div>
           )}
